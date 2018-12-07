@@ -1,0 +1,1 @@
+dotnet test src\SqlOnlineMigration.Tests\SqlOnlineMigration.Tests.csproj -o ..\..\build

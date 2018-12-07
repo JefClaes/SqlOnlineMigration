@@ -1,0 +1,1 @@
+dotnet publish src\SqlOnlineMigration\SqlOnlineMigration.csproj -o ..\..\build
