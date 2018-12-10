@@ -4,7 +4,7 @@ namespace SqlOnlineMigration.Internals
 {
     public class SmoDatabaseOperationsSettings
     {
-        public SmoDatabaseOperationsSettings(int synchronizationBatchSize, int synchronizationDelayBetweenBatches, int statementTimeout)
+        public SmoDatabaseOperationsSettings(int synchronizationBatchSize, TimeSpan synchronizationDelayBetweenBatches, int statementTimeout)
         {
             if (synchronizationBatchSize <= 0)
                 throw new ArgumentOutOfRangeException(nameof(synchronizationBatchSize));
@@ -15,7 +15,7 @@ namespace SqlOnlineMigration.Internals
         }
 
         public int SynchronizationBatchSize { get; }
-        public int SynchronizationDelayBetweenBatches { get; }
+        public TimeSpan SynchronizationDelayBetweenBatches { get; }
         public int StatementTimeout { get; }
 
         public override string ToString()

@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SqlOnlineMigration.Internals
 {
     public class SqlScripts
     {
-        public static string Copy(TableName source, TableName destination, string idColumnName, string[] columnNames, int batchSize, int batchDelay)
+        public static string Copy(TableName source, TableName destination, string idColumnName, string[] columnNames, int batchSize, TimeSpan batchDelay)
         {
             return
                 $@"SET IDENTITY_INSERT {destination} ON
@@ -33,10 +34,11 @@ namespace SqlOnlineMigration.Internals
                         VALUES ({ToCsv(columnNames.Select(x => $"source.{x}").ToArray())})
                     ;
 
-                    WAITFOR DELAY '00:00:01.{batchDelay}'
-
                     SET @StartID = @EndId + 1
-                   END
+
+                    WAITFOR DELAY '{batchDelay:hh':'mm':'ss'.'fff}'
+
+                    END
 
                    SET IDENTITY_INSERT {destination} OFF";
         }
