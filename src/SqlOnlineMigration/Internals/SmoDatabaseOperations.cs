@@ -80,7 +80,13 @@ namespace SqlOnlineMigration.Internals
             Execute(nameof(SynchronizeData), db =>
             {
                 db.Instance.ExecuteNonQuery(
-                    SqlScripts.Copy(source.Name, ghost.Name, source.IdColumnName, ColumnNames(GetTable(db.Instance, source.Name)), batchSize: _settings.SynchronizationBatchSize));
+                    SqlScripts.Copy(
+                        source.Name, 
+                        ghost.Name, 
+                        source.IdColumnName, 
+                        ColumnNames(GetTable(db.Instance, source.Name)), 
+                        _settings.SynchronizationBatchSize,
+                        _settings.SynchronizationDelayBetweenBatches));
             });
         }
 

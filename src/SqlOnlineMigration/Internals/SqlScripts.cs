@@ -5,7 +5,7 @@ namespace SqlOnlineMigration.Internals
 {
     public class SqlScripts
     {
-        public static string Copy(TableName source, TableName destination, string idColumnName, string[] columnNames, int batchSize = 50)
+        public static string Copy(TableName source, TableName destination, string idColumnName, string[] columnNames, int batchSize, int batchDelay)
         {
             return
                 $@"SET IDENTITY_INSERT {destination} ON
@@ -32,6 +32,8 @@ namespace SqlOnlineMigration.Internals
                         INSERT ({ToCsv(columnNames)})
                         VALUES ({ToCsv(columnNames.Select(x => $"source.{x}").ToArray())})
                     ;
+
+                    WAITFOR DELAY '00:00:01.{batchDelay}'
 
                     SET @StartID = @EndId + 1
                    END

@@ -25,7 +25,7 @@ namespace SqlOnlineMigration
             _dbOperations.SynchronizeData(sourceTable, ghostTable);
 
             ArchivedTable archivedTable = null;
-
+            
             await _swapIn(() =>
             {
                 archivedTable = _dbOperations.SwapTables(sourceTable, ghostTable);
