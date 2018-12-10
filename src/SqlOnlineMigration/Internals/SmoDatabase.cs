@@ -27,9 +27,11 @@ namespace SqlOnlineMigration.Internals
             return new CapturedStatement(OperationName, sql.ToString());
         }
 
-        public static SmoDatabase Open(string connectionstring, string database, string operationName)
+        public static SmoDatabase Open(string connectionstring, string database, string operationName, int statementTimeout)
         {
-            var conn = new ServerConnection(new SqlConnection(connectionstring));
+            var conn = new ServerConnection(new SqlConnection(connectionstring)) {
+                StatementTimeout = statementTimeout
+            };
             var srv = new Server(conn) {
                 ConnectionContext = { SqlExecutionModes = SqlExecutionModes.ExecuteAndCaptureSql }
             };

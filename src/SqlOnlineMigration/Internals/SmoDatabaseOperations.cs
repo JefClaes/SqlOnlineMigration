@@ -119,7 +119,7 @@ namespace SqlOnlineMigration.Internals
 
         private SmoDatabase OpenDatabase(string operationName)
         {
-            return SmoDatabase.Open(_connectionstring, _database, operationName);
+            return SmoDatabase.Open(_connectionstring, _database, operationName, _settings.StatementTimeout);
         }
 
         private TResult Execute<TResult>(string operationName, Func<SmoDatabase, TResult> action)

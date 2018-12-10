@@ -20,7 +20,7 @@ namespace SqlOnlineMigration
             _namingConventions = new DefaultNamingConventions();
             _logger = new NopLogger();
             _swapWrapper = async swap => await swap();
-            _settings = new SmoDatabaseOperationsSettings(5000);
+            _settings = new SmoDatabaseOperationsSettings(5000, 0);
         }
             
         public SchemaMigrationBuilder WithSwapWrappedIn(SwapWrapper swapWrapper)
