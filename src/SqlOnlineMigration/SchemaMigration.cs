@@ -21,7 +21,7 @@ namespace SqlOnlineMigration
             var sourceTable = new SourceTable(source.TableName, source.IdColumnName);
             var ghostTableResult = _dbOperations.CreateGhostTable(sourceTable);
             var ghostTable = ghostTableResult.Table;
-            if (!ghostTableResult.Created)
+            if (ghostTableResult.Created)
                 _dbOperations.ExecuteScriptOnGhost(ghostTable, alterSqlStatements(ghostTable, _namingConventions));
             sourceTable = _dbOperations.CreateSynchronizationTriggersOnSource(sourceTable, ghostTable);
             _dbOperations.SynchronizeData(sourceTable, ghostTable);
