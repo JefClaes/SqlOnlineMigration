@@ -34,16 +34,16 @@ namespace SqlOnlineMigration.Tests.Integration
         {
             var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratingMoreThanOnceWithoutSwappingResultIsOk)}";
 
-            await Sut(schema)
-                .GivenNoSwap()
-                .Run()
-                .ConfigureAwait(false);
-
             (await Sut(schema)
                 .GivenNoSwap()
                 .Run()
                 .ConfigureAwait(false))
-           .ArchivedTableNull();
+            .ArchivedTableNull();
+
+            (await Sut(schema)
+                    .Run()
+                    .ConfigureAwait(false))
+            .ArchivedTableObjectNotNull();
         }
 
         private MigrationScenario Sut(string schema)
