@@ -26,7 +26,7 @@ namespace SqlOnlineMigration.Tests.Integration.Simulations
 
                 var sut = new SchemaMigrationBuilder(conn.ConnectionString, conn.Database)
                     .WithLogger(new TestContextLogger())
-                    .WithSwapWrappedIn(async (swap) => await Retry.OnDeadlock(swap, 3, TimeSpan.FromSeconds(2)))
+                    .WithSwapWrappedIn(async (swap) => await Retry.OnDeadlock(swap, 3, TimeSpan.FromSeconds(1)))
                     .Build();
 
                 await sut.Run(
@@ -40,7 +40,7 @@ namespace SqlOnlineMigration.Tests.Integration.Simulations
                             $"ALTER TABLE {target.Name} ADD CONSTRAINT [{namingconv.GhostObject("Test_Id")}] PRIMARY KEY CLUSTERED ([{simulationSchema.TestTableIdColumnName}] ASC)"
                         }).ConfigureAwait(false);
 
-                await Task.Delay(TimeSpan.FromSeconds(2));
+                await Task.Delay(TimeSpan.FromSeconds(3));
                 token.Cancel();
 
                 var writtenBlock = await concurrentInserts;

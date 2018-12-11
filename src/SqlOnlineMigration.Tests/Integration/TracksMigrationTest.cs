@@ -19,14 +19,31 @@ namespace SqlOnlineMigration.Tests.Integration
         }
 
         [Test]
-        public async Task WhenMigratedSourceTableIsArchived()
+        public async Task WhenMigratingSourceTableIsArchived()
         {
-            var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratedSourceTableIsArchived)}";
+            var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratingSourceTableIsArchived)}";
 
             (await Sut(schema)
                 .Run()
                 .ConfigureAwait(false))
             .ArchivedTableObjectNotNull();
+        }
+
+        [Test]
+        public async Task WhenMigratingMoreThanOnceWithoutSwappingResultIsOk()
+        {
+            var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratingMoreThanOnceWithoutSwappingResultIsOk)}";
+
+            await Sut(schema)
+                .GivenNoSwap()
+                .Run()
+                .ConfigureAwait(false);
+
+            (await Sut(schema)
+                .GivenNoSwap()
+                .Run()
+                .ConfigureAwait(false))
+           .ArchivedTableNull();
         }
 
         private MigrationScenario Sut(string schema)

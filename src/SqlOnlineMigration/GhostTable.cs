@@ -1,4 +1,4 @@
-﻿namespace SqlOnlineMigration.Internals
+﻿namespace SqlOnlineMigration
 {
     public class GhostTable
     {

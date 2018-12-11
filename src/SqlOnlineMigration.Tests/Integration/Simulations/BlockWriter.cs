@@ -2,7 +2,6 @@
 using System.Data.SqlClient;
 using System.Threading;
 using System.Threading.Tasks;
-using SqlOnlineMigration.Internals;
 
 namespace SqlOnlineMigration.Tests.Integration.Simulations
 {

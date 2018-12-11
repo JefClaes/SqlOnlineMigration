@@ -6,6 +6,16 @@ namespace SqlOnlineMigration.Internals
 {
     public class SqlScripts
     {
+        public static string SelectObjectIdTable(TableName table)
+        {
+            return $@"SELECT OBJECT_ID(N'{table}', 'U')";
+        }
+
+        public static string SelectObjectIdTrigger(MultiPartIdentifier trigger)
+        {
+            return $@"SELECT OBJECT_ID (N'{trigger}', N'TR')";
+        }
+
         public static string Copy(TableName source, TableName destination, string idColumnName, string[] columnNames, int batchSize, TimeSpan batchDelay)
         {
             return
@@ -42,7 +52,7 @@ namespace SqlOnlineMigration.Internals
 
                    SET IDENTITY_INSERT {destination} OFF";
         }
-        
+
         public static string InsertIntoTriggerBody(TableName destination, string[] columnNames)
         {
             return $@"
@@ -62,7 +72,7 @@ namespace SqlOnlineMigration.Internals
         {
             return $@"
                 UPDATE {destination} 
-                SET {ToSetList(columnNames.ToList().Except(new List<string> { idColumnName }).ToArray())} FROM Inserted 
+                SET {ToSetList(columnNames.ToList().Except(new List<string> {idColumnName}).ToArray())} FROM Inserted 
                 WHERE {destination}.{idColumnName} = Inserted.{idColumnName} ";
         }
 

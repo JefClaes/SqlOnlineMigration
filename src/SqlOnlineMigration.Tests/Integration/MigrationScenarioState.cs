@@ -10,6 +10,7 @@ namespace SqlOnlineMigration.Tests.Integration
         }
 
         public Dictionary<TableName, string> TableDdl { get; set; }
+        public SchemaMigrationResult Result { get; set; }
         public int? SourceTableObjectId { get; set; }
         public int? ArchivedTableObjectId { get; set; }
     }

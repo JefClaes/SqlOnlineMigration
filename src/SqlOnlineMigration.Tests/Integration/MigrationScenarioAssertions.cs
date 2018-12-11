@@ -37,5 +37,12 @@ namespace SqlOnlineMigration.Tests.Integration
 
             return this;
         }
+
+        public MigrationScenarioAssertions ArchivedTableNull()
+        {
+            Assert.IsNull(_after.Result.ArchivedTable, "Archived table");
+
+            return this;
+        }
     }
 }

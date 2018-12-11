@@ -32,10 +32,11 @@ namespace SqlOnlineMigration.Internals
             _capturedStatements = new CapturedStatements();
         }
 
-        public GhostTable CreateGhostTable(SourceTable sourceTable)
+        public GhostTableCreationResult CreateGhostTable(SourceTable sourceTable)
         {
             return Execute(nameof(CreateGhostTable), db =>
             {
+                var ddlExecuted = false;
                 var options = new ScriptingOptions
                 {
                     SchemaQualify = true,
@@ -43,16 +44,20 @@ namespace SqlOnlineMigration.Internals
                     Indexes = true,
                 };
 
-                var commands = GetTable(db.Instance, sourceTable.Name)
-                    .Script(options)
-                    .Cast<string>().Select(x => x + "\n");
-
-                var sourceScript = new SourceDdlScript(sourceTable.Name, string.Join("\n", commands));
+                var commands = GetTable(db.Instance, sourceTable.Name).Script(options);
+                var sourceScript = new SourceTableDdlScript(sourceTable.Name, new DdlScript(commands));
+                var ghostTableName = new TableName(sourceTable.Name.Schema, _namingConventions.GhostObject(sourceTable.Name.Name));
                 var ghostScript = sourceScript.ToGhost(_namingConventions);
+                
+                var objectId = db.Instance.ExecuteWithResults(SqlScripts.SelectObjectIdTable(ghostTableName)).Tables[0].Rows[0][0];
 
-                db.Instance.ExecuteNonQuery(ghostScript.ToString());
+                if (objectId == DBNull.Value)
+                {
+                    db.Instance.ExecuteNonQuery(ghostScript.Script.ToString());
+                    ddlExecuted = true;
+                }
 
-                return new GhostTable(new TableName(sourceTable.Name.Schema, _namingConventions.GhostObject(sourceTable.Name.Name)));
+                return new GhostTableCreationResult(ddlExecuted, new GhostTable(ghostTableName));
             });
         }
 
@@ -68,8 +73,12 @@ namespace SqlOnlineMigration.Internals
 
                 var triggers = new List<Trigger> { triggerOnInsert, triggerOnDelete, triggerOnUpdate };
 
-                foreach (var trigger in triggers)
-                    trigger.Create();
+                foreach (var trigger in triggers) {
+                    var objectId = db.Instance.ExecuteWithResults(SqlScripts.SelectObjectIdTrigger(new MultiPartIdentifier(table.Schema, trigger.Name))).Tables[0].Rows[0][0];
+
+                    if (objectId == DBNull.Value)
+                        trigger.Create();
+                }
 
                 return new SourceTable(source.Name, source.IdColumnName, triggers.Select(x => x.Name));
             });
@@ -97,15 +106,6 @@ namespace SqlOnlineMigration.Internals
                 foreach (var query in queries)
                     db.Instance.ExecuteNonQuery(query);
             }));
-        }
-
-        public void DropSynchronizationTriggers(SourceTable source)
-        {
-            Execute(nameof(DropSynchronizationTriggers), db =>
-            {
-                foreach (var trigger in source.SynchronizationTriggers)
-                    db.Instance.ExecuteNonQuery(SqlScripts.DropTrigger(new MultiPartIdentifier(source.Name.Schema, trigger)));
-            });
         }
 
         public ArchivedTable SwapTables(SourceTable source, GhostTable ghost)

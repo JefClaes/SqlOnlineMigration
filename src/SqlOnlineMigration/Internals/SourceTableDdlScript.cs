@@ -2,22 +2,22 @@
 
 namespace SqlOnlineMigration.Internals
 {
-    public class SourceDdlScript
+    public class SourceTableDdlScript
     {
-        public SourceDdlScript(TableName tableName, string value)
+        public SourceTableDdlScript(TableName tableName, DdlScript script)
         {
-            Value = value;
             TableName = tableName;
+            Script = script;
         }
 
-        public string Value { get; }
+        public DdlScript Script { get; }
         public TableName TableName { get; }
 
-        public SourceDdlScript ToGhost(INamingConventions namingConventions)
+        public SourceTableDdlScript ToGhost(INamingConventions namingConventions)
         {
             var result = string.Empty;
 
-            result = Regex.Replace(Value, "WITH NOCHECK ADD  CONSTRAINT \\[(.*?)\\]", m => MatchConstraint(m, namingConventions));
+            result = Regex.Replace(Script.Value, "WITH NOCHECK ADD  CONSTRAINT \\[(.*?)\\]", m => MatchConstraint(m, namingConventions));
             result = Regex.Replace(result, "WITH CHECK ADD  CONSTRAINT \\[(.*?)\\]", m => MatchConstraint(m, namingConventions));
             result = Regex.Replace(result, "ADD  CONSTRAINT \\[(.*?)\\]  DEFAULT", m => MatchConstraint(m, namingConventions));
             result = Regex.Replace(result, "CHECK CONSTRAINT \\[(.*?)\\]", m => MatchConstraint(m, namingConventions));
@@ -31,7 +31,7 @@ namespace SqlOnlineMigration.Internals
             result = Regex.Replace(result, "CONSTRAINT \\[(.*?)\\] UNIQUE NONCLUSTERED ", m => MatchConstraint(m, namingConventions));
             result = Regex.Replace(result, "ALTER TABLE \\[(.*?)\\].\\[(.*?)\\]", m => NewTableName(m, namingConventions));
 
-            return new SourceDdlScript(new TableName(TableName.Schema, namingConventions.GhostObject(TableName.Name)), result);
+            return new SourceTableDdlScript(new TableName(TableName.Schema, namingConventions.GhostObject(TableName.Name)), new DdlScript(result));
         }
 
         private string NewTableName(Match m, INamingConventions namingConventions)
@@ -59,8 +59,7 @@ namespace SqlOnlineMigration.Internals
 
         public override string ToString()
         {
-            return Value;
+            return Script.Value;
         }
     }
 }
-

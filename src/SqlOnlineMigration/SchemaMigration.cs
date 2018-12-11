@@ -19,8 +19,10 @@ namespace SqlOnlineMigration
         public async Task<SchemaMigrationResult> Run(Source source, AlterSqlStatements alterSqlStatements)
         {
             var sourceTable = new SourceTable(source.TableName, source.IdColumnName);
-            var ghostTable = _dbOperations.CreateGhostTable(sourceTable);
-            _dbOperations.ExecuteScriptOnGhost(ghostTable, alterSqlStatements(ghostTable, _namingConventions));
+            var ghostTableResult = _dbOperations.CreateGhostTable(sourceTable);
+            var ghostTable = ghostTableResult.Table;
+            if (!ghostTableResult.Created)
+                _dbOperations.ExecuteScriptOnGhost(ghostTable, alterSqlStatements(ghostTable, _namingConventions));
             sourceTable = _dbOperations.CreateSynchronizationTriggersOnSource(sourceTable, ghostTable);
             _dbOperations.SynchronizeData(sourceTable, ghostTable);
 

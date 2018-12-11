@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using SqlOnlineMigration.Internals;
 
 namespace SqlOnlineMigration
@@ -31,6 +32,13 @@ namespace SqlOnlineMigration
             return this;
         }
 
+        public SchemaMigrationBuilder WithNoSwap()
+        {
+            _swapWrapper = _ => Task.CompletedTask;
+
+            return this;
+        }
+
         public SchemaMigrationBuilder WithLogger(ILogger logger)
         {
             _logger = logger;
@@ -44,7 +52,7 @@ namespace SqlOnlineMigration
 
             return this;
         }
-
+     
         public SchemaMigration Build()
         {
             return new SchemaMigration(
