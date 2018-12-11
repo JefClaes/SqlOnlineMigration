@@ -7,9 +7,9 @@ namespace SqlOnlineMigration.Tests.Integration
     public class TracksMigrationTest
     {
         [Test]
-        public async Task WhenMigratingSchemaMigrated()
+        public async Task WhenMigratingSourceSchemaMigrated()
         {
-            var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratingSchemaMigrated)}";
+            var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratingSourceSchemaMigrated)}";
 
             (await Sut(schema)
                 .Run()
@@ -19,9 +19,9 @@ namespace SqlOnlineMigration.Tests.Integration
         }
 
         [Test]
-        public async Task WhenMigratedSourceArchived()
+        public async Task WhenMigratedSourceTableIsArchived()
         {
-            var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratedSourceArchived)}";
+            var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratedSourceTableIsArchived)}";
 
             (await Sut(schema)
                 .Run()
