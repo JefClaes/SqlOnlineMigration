@@ -4,7 +4,6 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
-using NUnit.Framework;
 using SqlOnlineMigration.Tests.Infra;
 
 namespace SqlOnlineMigration.Tests.Integration
@@ -12,24 +11,29 @@ namespace SqlOnlineMigration.Tests.Integration
     public class MigrationScenario
     {
         private readonly string _schemaName;
+        private readonly List<TableName> _tables;
         private readonly List<Func<SqlConnection, Task>> _seeds;
-        private readonly List<TableName> _tableNamesUnchanged;
-
         private string _schema;
         private Source _migrationSource;
-        private bool _sourceArchived;
 
         public MigrationScenario(string schemaName)
         {
             _schemaName = schemaName;
             _seeds = new List<Func<SqlConnection, Task>>();
             _schema = string.Empty;
-            _tableNamesUnchanged = new List<TableName>();
+            _tables = new List<TableName>();
         }
 
         public MigrationScenario GivenSchema(string schema)
         {
             _schema = schema;
+
+            return this;
+        }
+
+        public MigrationScenario GivenTable(TableName table)
+        {
+            _tables.Add(table);
 
             return this;
         }
@@ -48,21 +52,7 @@ namespace SqlOnlineMigration.Tests.Integration
             return this;
         }
 
-        public MigrationScenario ThenSourceArchived()
-        {
-            _sourceArchived = true;
-
-            return this;
-        }
-
-        public MigrationScenario ThenDDLUnchanged(TableName tableName)
-        {
-            _tableNamesUnchanged.Add(tableName);
-
-            return this;
-        }
-
-        public async Task Run()
+        public async Task<MigrationScenarioAssertions> Run()
         {
             using (var conn = await TestSuite.GetOpenConnection())
             {
@@ -72,8 +62,10 @@ namespace SqlOnlineMigration.Tests.Integration
                 foreach (var seed in _seeds)
                     await seed(conn).ConfigureAwait(false);
 
-                var ddlBeforeMigration = _tableNamesUnchanged.ToDictionary(x => x, x => new Scripter(conn).Table(x));
-                var sourceObjectIdBeforeMigration = await GetObjectId(conn, _migrationSource.TableName.ToString());
+                var before = new MigrationScenarioState {
+                    TableDdl = _tables.ToDictionary(x => x, x => new Scripter(conn).Table(x)),
+                    SourceTableObjectId = await GetObjectId(conn, _migrationSource.TableName.ToString())
+                };
 
                 var result = await 
                     new SchemaMigrationBuilder(conn.ConnectionString, conn.Database)
@@ -82,18 +74,13 @@ namespace SqlOnlineMigration.Tests.Integration
                     .Run(_migrationSource, (_, __) => new string[0])
                     .ConfigureAwait(false);
 
-                var ddlAfterMigration = _tableNamesUnchanged.ToDictionary(x => x, x => new Scripter(conn).Table(x));
-                var sourceObjectIdAfterMigration = await GetObjectId(conn, _migrationSource.TableName.ToString());
+                var after = new MigrationScenarioState {
+                    TableDdl = _tables.ToDictionary(x => x, x => new Scripter(conn).Table(x)),
+                    SourceTableObjectId = await GetObjectId(conn, _migrationSource.TableName.ToString()),
+                    ArchivedTableObjectId = await GetObjectId(conn, result.ArchivedTable.Name.ToString())
+                };
 
-                Assert.Multiple(() =>
-                {
-                    Assert.AreNotEqual(sourceObjectIdBeforeMigration, sourceObjectIdAfterMigration, $"{_migrationSource.TableName} ObjectId");
-                    foreach (var tableName in _tableNamesUnchanged)
-                        Assert.AreEqual(ddlBeforeMigration[tableName], ddlAfterMigration[tableName]);
-                });
-
-                if (_sourceArchived)
-                    Assert.IsNotNull(await GetObjectId(conn, result.ArchivedTable.Name.ToString()), "Archived table");
+                return new MigrationScenarioAssertions(before, after);
             }
         }
 

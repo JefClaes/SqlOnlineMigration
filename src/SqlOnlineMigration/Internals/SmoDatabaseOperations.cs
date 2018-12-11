@@ -132,10 +132,11 @@ namespace SqlOnlineMigration.Internals
         {
             using (var db = OpenDatabase(operationName))
             {
-                _logger.Debug($"Executing {db.Statement().Name} = {db.Statement().Statement}");
-                
+                _logger.Debug($"Executing {db.Statement().Name}");
+
                 var result = action(db);
 
+                _logger.Debug($"Executed {db.Statement().Name} = {db.Statement().Statement}");
                 _capturedStatements.Add(db.Statement());
 
                 return result;
@@ -146,10 +147,11 @@ namespace SqlOnlineMigration.Internals
         {
             using (var db = OpenDatabase(operationName))
             {
-                _logger.Debug($"Executing {db.Statement().Name} = {db.Statement().Statement}");
-                
+                _logger.Debug($"Executing {db.Statement().Name}");
+
                 action(db);
 
+                _logger.Debug($"Executed {db.Statement().Name} = {db.Statement().Statement}");
                 _capturedStatements.Add(db.Statement());
             }
         }

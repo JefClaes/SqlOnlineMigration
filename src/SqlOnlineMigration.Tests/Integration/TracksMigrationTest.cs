@@ -7,25 +7,26 @@ namespace SqlOnlineMigration.Tests.Integration
     public class TracksMigrationTest
     {
         [Test]
-        public async Task SchemaMigrated()
+        public async Task WhenMigratingSchemaMigrated()
         {
-            var schema = $"{nameof(TracksMigrationTest)}_{nameof(SchemaMigrated)}";
+            var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratingSchemaMigrated)}";
 
-            await Sut(schema)
-                .ThenDDLUnchanged(new TableName(schema, "Artist"))
-                .ThenDDLUnchanged(new TableName(schema, "Album"))
-                .ThenDDLUnchanged(new TableName(schema, "Track"))
-                .Run().ConfigureAwait(false);
+            (await Sut(schema)
+                .Run()
+                .ConfigureAwait(false))
+            .AllTableDdlUnchanged()
+            .SourceTableObjectIdsAreNotEqual();
         }
 
         [Test]
-        public async Task SourceArchived()
+        public async Task WhenMigratedSourceArchived()
         {
-            var schema = $"{nameof(TracksMigrationTest)}_{nameof(SourceArchived)}";
+            var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratedSourceArchived)}";
 
-            await Sut(schema)
-                .ThenSourceArchived()
-                .Run().ConfigureAwait(false);
+            (await Sut(schema)
+                .Run()
+                .ConfigureAwait(false))
+            .ArchivedTableObjectNotNull();
         }
 
         private MigrationScenario Sut(string schema)
@@ -61,6 +62,9 @@ namespace SqlOnlineMigration.Tests.Integration
                     REFERENCES [{schema}].[Album] ([Id])
 
                     ALTER TABLE [{schema}].[Track] CHECK CONSTRAINT [FK_Track_Album]")
+                .GivenTable(new TableName(schema, "Artist"))
+                .GivenTable(new TableName(schema, "Album"))
+                .GivenTable(new TableName(schema, "Track"))
                 .SeededWith(conn => conn.ExecuteAsync($"INSERT INTO [{schema}].[Artist] ([Name]) VALUES (@Name)", new { Name = "Oscar and the Wolf" }))
                 .SeededWith(conn => conn.ExecuteAsync($"INSERT INTO [{schema}].[Album] ([Title], [ArtistId]) VALUES (@Title, @ArtistId)", new { Title = "Infinity", ArtistId = 1 }))
                 .SeededWith(conn => conn.ExecuteAsync($"INSERT INTO [{schema}].[Track] ([Name], [AlbumId]) VALUES (@Name, @AlbumId)", new { Name = "So Real", AlbumId = 1 }))
