@@ -13,5 +13,6 @@ namespace SqlOnlineMigration.Tests.Integration
         public SchemaMigrationResult Result { get; set; }
         public int? SourceTableObjectId { get; set; }
         public int? ArchivedTableObjectId { get; set; }
+        public int RowCount { get; set; }
     }
 }

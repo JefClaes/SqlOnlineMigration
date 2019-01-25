@@ -19,13 +19,24 @@ namespace SqlOnlineMigration.Tests.Integration
         }
 
         [Test]
+        public async Task WhenMigratingDataMigrated()
+        {
+            var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratingDataMigrated)}";
+
+            (await Sut(schema)
+                    .Run()
+                    .ConfigureAwait(false))
+                .RowCountEqual();
+        }
+
+        [Test]
         public async Task WhenMigratingSourceTableIsArchived()
         {
             var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratingSourceTableIsArchived)}";
 
             (await Sut(schema)
-                .Run()
-                .ConfigureAwait(false))
+                    .Run()
+                    .ConfigureAwait(false))
             .ArchivedTableObjectNotNull();
         }
 
@@ -46,7 +57,18 @@ namespace SqlOnlineMigration.Tests.Integration
             .ArchivedTableObjectNotNull();
         }
 
-        private MigrationScenario Sut(string schema)
+        [Test]
+        public async Task WhenMigratingWithFilterConditionNeverMet()
+        {
+            var schema = $"{nameof(TracksMigrationTest)}_{nameof(WhenMigratingWithFilterConditionNeverMet)}";
+
+            (await Sut(schema, "1 = 0")
+                    .Run()
+                    .ConfigureAwait(false))
+                .RowCountNotEqual();
+        }
+
+        private MigrationScenario Sut(string schema, string filter = "")
         {
             return new MigrationScenario(schema)
                 .GivenSchema($@"                                          
@@ -85,7 +107,7 @@ namespace SqlOnlineMigration.Tests.Integration
                 .SeededWith(conn => conn.ExecuteAsync($"INSERT INTO [{schema}].[Artist] ([Name]) VALUES (@Name)", new { Name = "Oscar and the Wolf" }))
                 .SeededWith(conn => conn.ExecuteAsync($"INSERT INTO [{schema}].[Album] ([Title], [ArtistId]) VALUES (@Title, @ArtistId)", new { Title = "Infinity", ArtistId = 1 }))
                 .SeededWith(conn => conn.ExecuteAsync($"INSERT INTO [{schema}].[Track] ([Name], [AlbumId]) VALUES (@Name, @AlbumId)", new { Name = "So Real", AlbumId = 1 }))
-                .WhenMigrating(new Source(new TableName(schema, "Track"), "Id"));
+                .WhenMigrating(new Source(new TableName(schema, "Track"), "Id"), filter);
         }
     }
 }

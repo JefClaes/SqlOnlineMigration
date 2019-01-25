@@ -44,5 +44,19 @@ namespace SqlOnlineMigration.Tests.Integration
 
             return this;
         }
+
+        public MigrationScenarioAssertions RowCountEqual()
+        {
+            Assert.AreEqual(_before.RowCount, _after.RowCount, "Row counts");
+
+            return this;
+        }
+
+        public MigrationScenarioAssertions RowCountNotEqual()
+        {
+            Assert.AreNotEqual(_before.RowCount, _after.RowCount, "Row counts");
+
+            return this;
+        }
     }
 }

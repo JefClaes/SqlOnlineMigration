@@ -84,7 +84,7 @@ namespace SqlOnlineMigration.Internals
             });
         }
 
-        public void SynchronizeData(SourceTable source, GhostTable ghost)
+        public void SynchronizeData(SourceTable source, GhostTable ghost, string sourceFilter)
         {
             Execute(nameof(SynchronizeData), db =>
             {
@@ -93,7 +93,8 @@ namespace SqlOnlineMigration.Internals
                         source.Name, 
                         ghost.Name, 
                         source.IdColumnName, 
-                        ColumnNames(GetTable(db.Instance, source.Name)), 
+                        ColumnNames(GetTable(db.Instance, source.Name)),
+                        sourceFilter, 
                         _settings.SynchronizationBatchSize,
                         _settings.SynchronizationDelayBetweenBatches));
             });

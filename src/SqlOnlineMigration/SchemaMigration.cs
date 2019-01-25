@@ -16,7 +16,7 @@ namespace SqlOnlineMigration
             _swapIn = swapIn;
         }
 
-        public async Task<SchemaMigrationResult> Run(Source source, AlterSqlStatements alterSqlStatements)
+        public async Task<SchemaMigrationResult> Run(Source source, AlterSqlStatements alterSqlStatements, string sourceFilter = "")
         {
             var sourceTable = new SourceTable(source.TableName, source.IdColumnName);
             var ghostTableResult = _dbOperations.CreateGhostTable(sourceTable);
@@ -24,7 +24,7 @@ namespace SqlOnlineMigration
             if (ghostTableResult.Created)
                 _dbOperations.ExecuteScriptOnGhost(ghostTable, alterSqlStatements(ghostTable, _namingConventions));
             sourceTable = _dbOperations.CreateSynchronizationTriggersOnSource(sourceTable, ghostTable);
-            _dbOperations.SynchronizeData(sourceTable, ghostTable);
+            _dbOperations.SynchronizeData(sourceTable, ghostTable, sourceFilter);
 
             ArchivedTable archivedTable = null;
             

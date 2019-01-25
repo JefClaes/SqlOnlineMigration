@@ -14,6 +14,7 @@ namespace SqlOnlineMigration.Tests.Integration
         private readonly List<TableName> _tables;
         private readonly List<Func<SqlConnection, Task>> _seeds;
         private string _schema;
+        private string _filter;
         private Source _migrationSource;
         private SwapWrapper _swapWrapper;
 
@@ -54,9 +55,10 @@ namespace SqlOnlineMigration.Tests.Integration
             return this;
         }
 
-        public MigrationScenario WhenMigrating(Source source)
+        public MigrationScenario WhenMigrating(Source source, string filter)
         {
             _migrationSource = source;
+            _filter = filter;
 
             return this;
         }
@@ -69,7 +71,8 @@ namespace SqlOnlineMigration.Tests.Integration
 
                 var before = new MigrationScenarioState {
                     TableDdl = _tables.ToDictionary(x => x, x => new Scripter(conn).Table(x)),
-                    SourceTableObjectId = await GetObjectId(conn, _migrationSource.TableName.ToString())
+                    SourceTableObjectId = await GetObjectId(conn, _migrationSource.TableName.ToString()),
+                    RowCount = await Count(conn, _migrationSource.TableName)
                 };
 
                 var result = await 
@@ -77,14 +80,15 @@ namespace SqlOnlineMigration.Tests.Integration
                         .WithSwapWrappedIn(_swapWrapper)
                         .WithLogger(new TestContextLogger())
                         .Build()
-                    .Run(_migrationSource, (_, __) => new string[0])
+                    .Run(_migrationSource, (_, __) => new string[0], _filter)
                     .ConfigureAwait(false);
 
                 var after = new MigrationScenarioState {
                     TableDdl = _tables.ToDictionary(x => x, x => new Scripter(conn).Table(x)),
                     Result = result,
                     SourceTableObjectId = await GetObjectId(conn, _migrationSource.TableName.ToString()),
-                    ArchivedTableObjectId = result.ArchivedTable == null ? null : await GetObjectId(conn, result.ArchivedTable.Name.ToString())
+                    ArchivedTableObjectId = result.ArchivedTable == null ? null : await GetObjectId(conn, result.ArchivedTable.Name.ToString()),
+                    RowCount = await Count(conn, _migrationSource.TableName)
                 };
 
                 return new MigrationScenarioAssertions(before, after);
@@ -101,6 +105,15 @@ namespace SqlOnlineMigration.Tests.Integration
                 foreach (var seed in _seeds)
                     await seed(conn).ConfigureAwait(false);
             }
+        }
+
+        private async Task<int> Count(SqlConnection conn, TableName table)
+        {
+            var sql = $@"
+                SELECT COUNT(*)
+                FROM {table}";
+
+            return await conn.ExecuteScalarAsync<int>(sql);
         }
 
         private async Task<bool> SchemaExists(SqlConnection conn)

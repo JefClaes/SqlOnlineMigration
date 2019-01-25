@@ -16,8 +16,11 @@ namespace SqlOnlineMigration.Internals
             return $@"SELECT OBJECT_ID (N'{trigger}', N'TR')";
         }
 
-        public static string Copy(TableName source, TableName destination, string idColumnName, string[] columnNames, int batchSize, TimeSpan batchDelay)
+        public static string Copy(TableName source, TableName destination, string idColumnName, string[] columnNames, string filterCondition, int batchSize, TimeSpan batchDelay)
         {
+            var lastIdFilter = string.IsNullOrEmpty(filterCondition) ? string.Empty : $" WHERE {filterCondition}";
+            var sourceColumnsAddittionalFilter = string.IsNullOrEmpty(filterCondition) ? string.Empty : $" AND {filterCondition}";
+
             return
                 $@"SET IDENTITY_INSERT {destination} ON
                    
@@ -28,7 +31,8 @@ namespace SqlOnlineMigration.Internals
                    SET @StartId = 0
 
                    SELECT @LastID = MAX({idColumnName})
-                   FROM {source}
+                   FROM {source} 
+                   {lastIdFilter}
 
                    WHILE @StartID < @LastID
                    BEGIN
@@ -37,7 +41,7 @@ namespace SqlOnlineMigration.Internals
                     MERGE INTO {destination} destination
                     USING (
                         SELECT {ToCsv(columnNames)} FROM {source}
-                        WHERE {idColumnName} BETWEEN @StartID AND @EndId
+                        WHERE {idColumnName} BETWEEN @StartID AND @EndId {sourceColumnsAddittionalFilter}
                     ) AS source ON (destination.{idColumnName} = source.{idColumnName})
                     WHEN NOT MATCHED BY TARGET THEN
                         INSERT ({ToCsv(columnNames)})
