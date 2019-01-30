@@ -8,23 +8,30 @@ namespace SqlOnlineMigration
         private readonly IDatabaseOperations _dbOperations;
         private readonly INamingConventions _namingConventions;
         private readonly SwapWrapper _swapIn;
+        private readonly bool _synchronizeData;
 
-        public SchemaMigration(IDatabaseOperations dbOperations, INamingConventions namingConventions, SwapWrapper swapIn)
+        public SchemaMigration(IDatabaseOperations dbOperations, INamingConventions namingConventions, SwapWrapper swapIn, bool synchronizeData = true)
         {
             _dbOperations = dbOperations;
             _namingConventions = namingConventions;
             _swapIn = swapIn;
+            _synchronizeData = synchronizeData;
         }
 
         public async Task<SchemaMigrationResult> Run(Source source, AlterSqlStatements alterSqlStatements, string sourceFilter = "")
         {
             var sourceTable = new SourceTable(source.TableName, source.IdColumnName);
+            
             var ghostTableResult = _dbOperations.CreateGhostTable(sourceTable);
             var ghostTable = ghostTableResult.Table;
-            if (ghostTableResult.Created)
+            
+            if (ghostTableResult.Created) 
                 _dbOperations.ExecuteScriptOnGhost(ghostTable, alterSqlStatements(ghostTable, _namingConventions));
+
             sourceTable = _dbOperations.CreateSynchronizationTriggersOnSource(sourceTable, ghostTable);
-            _dbOperations.SynchronizeData(sourceTable, ghostTable, sourceFilter);
+
+            if (_synchronizeData)
+                _dbOperations.SynchronizeData(sourceTable, ghostTable, sourceFilter);
 
             ArchivedTable archivedTable = null;
             

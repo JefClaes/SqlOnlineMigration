@@ -52,8 +52,8 @@ namespace SqlOnlineMigration.Tests.Integration
             .ArchivedTableNull();
 
             (await Sut(schema)
-                    .Run()
-                    .ConfigureAwait(false))
+                .Run()
+                .ConfigureAwait(false))
             .ArchivedTableObjectNotNull();
         }
 

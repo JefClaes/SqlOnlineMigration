@@ -13,6 +13,7 @@ namespace SqlOnlineMigration
         private INamingConventions _namingConventions;
         private ILogger _logger;
         private SwapWrapper _swapWrapper;
+        private bool _synchronizeData;
 
         public SchemaMigrationBuilder(string connectionstring, string database)
         {
@@ -23,6 +24,7 @@ namespace SqlOnlineMigration
             _logger = new NopLogger();
             _swapWrapper = async swap => await swap();
             _settings = new SmoDatabaseOperationsSettings(10000, TimeSpan.Zero, 0);
+            _synchronizeData = true;
         }
             
         public SchemaMigrationBuilder WithSwapWrappedIn(SwapWrapper swapWrapper)
@@ -52,13 +54,21 @@ namespace SqlOnlineMigration
 
             return this;
         }
+
+        public SchemaMigrationBuilder WithoutDataSynchronization()
+        {
+            _synchronizeData = false;
+
+            return this;
+        }
      
         public SchemaMigration Build()
         {
             return new SchemaMigration(
-                new SmoDatabaseOperations(_connectionstring, _database, _namingConventions, _logger, _settings), 
-                _namingConventions, 
-                _swapWrapper);
+                new SmoDatabaseOperations(_connectionstring, _database, _namingConventions, _logger, _settings),
+                _namingConventions,
+                _swapWrapper,
+                _synchronizeData);
         }
     }
 }
