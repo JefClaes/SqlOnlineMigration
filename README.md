@@ -29,5 +29,4 @@ await migration.Run(
 
 ## Disclaimer
 
-This has only been tested on low-scale local environments/simulations so far, but will be tested in staging/production the coming months.
-In case you're feeling adventurous, always tests migrations before executing on production. Use a tool like [OpenDBDiff](https://github.com/OpenDBDiff/OpenDBDiff) to verify schema changes before and after.
+Always test migrations before executing on production. Use a tool like [OpenDBDiff](https://github.com/OpenDBDiff/OpenDBDiff) to verify schema changes before and after.
